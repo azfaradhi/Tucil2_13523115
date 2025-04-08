@@ -10,9 +10,9 @@ using namespace std::chrono;
 int main() {
 
     bool isTarget = false;
-    int thersholdNow = 0;
-    int thersholdMax = 0;
-    int thersholdMin = 0;
+    double thersholdNow = 0;
+    double thersholdMax = 0;
+    double thersholdMin = 0;
 
     cout << " ___                                                        \n"
      << "|_ _|_ __ ___   __ _  __ _  ___                             \n"
@@ -30,7 +30,7 @@ int main() {
     
 
     ImageExtract img;
-    cout << "Masukkan alamat relatif gambar! (Contoh: test/pohon.jpg)" << endl;
+    cout << "Masukkan alamat relatif gambar! (contoh: test/tree.jpg)" << endl;
     printf("\x1B[32m>> \033[0m");
     string filename;
     cin >> filename;
@@ -234,8 +234,8 @@ int main() {
 
         if (isTarget){
             ratio = (double) (1 - (double)newSize/orginalSize)* 100;
-            if (abs(ratio - target) < 0.03){
-                cout << "Berhasil mencapai target dengan selisih 0.03!" <<  endl;
+            if (abs(ratio - target) < 0.01){
+                cout << "Berhasil mencapai target dengan selisih 0.01!" <<  endl;
                 totalnodes = quadtree.totalNodes();
                 leafnodes = quadtree.leafNodes();
                 depth = quadtree.depth();
@@ -249,17 +249,30 @@ int main() {
                 totalnodes = quadtree.totalNodes();
                 leafnodes = quadtree.leafNodes();
                 depth = quadtree.depth();
+                cout << "Membuat GIF kompresi..." << endl;
                 quadtree.createCompressionGIF(outputGifName , width, height);
                 break;
             }
 
             if (ratio < target){
-                thersholdMin = thersholdNow;
-                thersholdNow = (thersholdMax + thersholdMin) / 2;
+                if (method == 5){
+                    thersholdMax = thersholdNow;
+                    thersholdNow = (thersholdMax + thersholdMin) / 2;
+                }
+                else{
+                    thersholdMin = thersholdNow;
+                    thersholdNow = (thersholdMax + thersholdMin) / 2;
+                }
             }
             else if (ratio > target){
-                thersholdMax = thersholdNow;
-                thersholdNow = (thersholdMax + thersholdMin) / 2;
+                if (method == 5){
+                    thersholdMin = thersholdNow;
+                    thersholdNow = (thersholdMax + thersholdMin) / 2;
+                }
+                else{
+                    thersholdMax = thersholdNow;
+                    thersholdNow = (thersholdMax + thersholdMin) / 2;
+                }
             }
             cout << "Persentase kompresi saat ini: " << ratio << "%" << endl;
             remove(outputFileName.c_str());
@@ -281,13 +294,13 @@ int main() {
 
 
     
-    cout << "Original file size: " << orginalSize << " bytes" << endl;
-    cout << "New file size: " << newSize << " bytes" << endl;
-    cout << "Compression time: " << compressionTime << " ms" << endl;
-    cout << "Compression ratio: " << ratio << "%" << endl;
-    cout << "Total nodes: " << totalnodes << endl;
-    cout << "Leaf nodes: " << leafnodes << endl;
-    cout << "Depth: " << depth << endl;
+    cout << "Ukuran file asli: " << orginalSize << " bytes" << endl;
+    cout << "Ukuran file baru: " << newSize << " bytes" << endl;
+    cout << "Waktu kompresi: " << compressionTime << " ms" << endl;
+    cout << "Rasio kompresi: " << ratio << "%" << endl;
+    cout << "Total node: " << totalnodes << endl;
+    cout << "Node daun: " << leafnodes << endl;
+    cout << "Kedalaman: " << depth << endl;
     
 
     cout << "Gambar dan GIF telah berhasil disimpan!" << endl;
