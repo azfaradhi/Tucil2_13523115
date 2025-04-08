@@ -72,11 +72,6 @@ public:
     int depth() const;
     // Menghitung kedalaman quadtree
     
-    
-    void drawQuadTreeBoundaries(vector<vector<RGB>>& image, shared_ptr<QuadTreeNode> node, const RGB& boundaryColor);
-    vector<vector<RGB>> getQuadTreeVisualization(int width, int height);
-    // Hanya sebuah visualisasi, yaitu pmebatas antar pixel yang seragam
-    
     shared_ptr<QuadTreeNode> getRoot() const { return root; }
     // Mengambil alamat root
 
