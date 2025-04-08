@@ -79,16 +79,15 @@ public:
                 data[idx + 2] = imgData[i][j].b;
             }
         }
-        stbi_write_jpg(filename.c_str(), width, height, 3, data.data(), 90);
+        stbi_write_jpg(filename.c_str(), width, height, 3, data.data(), 70);
     }
 
-    // Metode gettter
 
     vector<vector<RGB>> getPixels() const { return pixels; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
     int pixelCount() const { return N; }
-    long getFileSize(const std::string& filename) {
+    long getFileSize(const string& filename) {
         ifstream file(filename, ios::binary | ios::ate);
         return file.tellg();
     }
