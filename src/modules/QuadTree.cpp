@@ -170,8 +170,15 @@ shared_ptr<QuadTreeNode> QuadTree::buildQuadTree(int x, int y, int width, int he
         return nullptr;
     }
 
-    if (error <= threshold){
-        return makeLeaf(x,y,height,width);
+    if (errorMethod == 5){
+        if (error >= threshold){
+            return makeLeaf(x,y,height,width);
+        }
+    }
+    else {
+        if (error <= threshold){
+            return makeLeaf(x,y,height,width);
+        }
     }
 
     int halfW = width/2;
@@ -179,6 +186,9 @@ shared_ptr<QuadTreeNode> QuadTree::buildQuadTree(int x, int y, int width, int he
     int halfH = height/2;
     int resH = height % 2;
 
+    if ((halfW * halfH) < minSize || (halfW + resW) * (halfH + resH) < minSize || (halfW + resW) * halfH < minSize || halfW * (halfH + resH) < minSize){
+        return makeLeaf(x,y,height,width);
+    }
     shared_ptr<QuadTreeNode> tl = buildQuadTree(x, y, halfW, halfH, threshold, minSize, errorMethod);
     shared_ptr<QuadTreeNode> tr = buildQuadTree(x + halfW, y, halfW + resW, halfH, threshold, minSize, errorMethod);
     shared_ptr<QuadTreeNode> bl = buildQuadTree(x, y + halfH, halfW, halfH + resH, threshold, minSize, errorMethod);
@@ -268,49 +278,6 @@ int QuadTree::depth() const {
     return countDepth(root);
 }
 
-
-void QuadTree::drawQuadTreeBoundaries(vector<vector<RGB>>& image, shared_ptr<QuadTreeNode> node, const RGB& boundaryColor) {
-    if (!node) return;
-    
-    int x = node->getX();
-    int y = node->getY();
-    int w = node->getWidth();
-    int h = node->getHeight();
-    
-    for (int i = x; i < min(x + w, (int)image[0].size()); i++) {
-        if (y >= 0 && y < (int)image.size()) {
-            image[y][i] = boundaryColor;
-        }
-        if (y + h - 1 >= 0 && y + h - 1 < (int)image.size()) {
-            image[y + h - 1][i] = boundaryColor;
-        }
-    }
-    
-    for (int j = y; j < min(y + h, (int)image.size()); j++) {
-        if (x >= 0 && x < (int)image[0].size()) {
-            image[j][x] = boundaryColor;
-        }
-        if (x + w - 1 >= 0 && x + w - 1 < (int)image[0].size()) {
-            image[j][x + w - 1] = boundaryColor;
-        }
-    }
-    
-    if (!node->getIsLeaf()) {
-        drawQuadTreeBoundaries(image, node->getTopLeft(), boundaryColor);
-        drawQuadTreeBoundaries(image, node->getTopRight(), boundaryColor);
-        drawQuadTreeBoundaries(image, node->getBottomLeft(), boundaryColor);
-        drawQuadTreeBoundaries(image, node->getBottomRight(), boundaryColor);
-    }
-}
-
-vector<vector<RGB>> QuadTree::getQuadTreeVisualization(int width, int height) {
-    vector<vector<RGB>> visualization = reconstructImage(width, height);
-    
-    RGB black(0, 0, 0);
-    drawQuadTreeBoundaries(visualization, root, black);
-    
-    return visualization;
-}
 
 void QuadTree::createCompressionGIF(const std::string& outputPath, int width, int height) {
 
