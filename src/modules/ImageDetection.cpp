@@ -32,12 +32,6 @@ string isImageFile(const string& filePath) {
         buffer[5] == 0x0A && buffer[6] == 0x1A && buffer[7] == 0x0A) { 
         return "PNG";
     }
-
-    if ((buffer[0] == 0x47 && buffer[1] == 0x49 && buffer[2] == 0x46 && 
-        buffer[3] == 0x38 && (buffer[4] == 0x37 || buffer[4] == 0x39) && 
-        buffer[5] == 0x61)) { 
-        return "GIF"; 
-    }
     cout << "File yang diberikan bukan gambar!" << endl;
     return "#"; 
 }
