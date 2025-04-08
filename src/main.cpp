@@ -3,11 +3,18 @@
 #include "header/QuadTree.hpp"
 #include "header/QuadTreeNode.hpp"
 #include <chrono>
+#include <filesystem>
 
 using namespace std::chrono;
 
 int main() {
-cout << " ___                                                        \n"
+
+    bool isTarget = false;
+    int thersholdNow = 0;
+    int thersholdMax = 0;
+    int thersholdMin = 0;
+
+    cout << " ___                                                        \n"
      << "|_ _|_ __ ___   __ _  __ _  ___                             \n"
      << " | || '_ ` _ \\ / _` |/ _` |/ _ \\                            \n"
      << " | || | | | | | (_| | (_| |  __/                            \n"
@@ -23,9 +30,8 @@ cout << " ___                                                        \n"
     
 
     ImageExtract img;
-    cout << "Masukkan alamat relatif gambar!" << endl;
-    cout << "Contoh: test/1.jpg" << endl;
-    cout << ">> ";
+    cout << "Masukkan alamat relatif gambar! (Contoh: test/pohon.jpg)" << endl;
+    printf("\x1B[32m>> \033[0m");
     string filename;
     cin >> filename;
     string isImage = isImageFile(filename);
@@ -47,9 +53,10 @@ cout << " ___                                                        \n"
 
     int method;
     while (true){
+        cout << endl;
         cout << "Masukkan metode yang diinginkan!" << endl;
-        cout << "Catatan: 1 = Variance, 2 = MAD, 3 = Max Pixel Difference, 4 = Entropi" << endl;
-        cout << ">> ";
+        cout << "Catatan: 1 = Variance, 2 = MAD, 3 = Max Pixel Difference, 4 = Entropi, 5 = SSIM" << endl;
+        printf("\x1B[32m>> \033[0m");
         if (!(cin >> method)) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -66,13 +73,15 @@ cout << " ___                                                        \n"
     double threshold;
 
     while (true){
+        cout << endl;
         cout << "Masukkan threshold yang diinginkan!" << endl;
         cout << "Catatan:" << endl;
-        cout << "1 = Variance (0 - 16256.25)" << endl;
-        cout << "2 = MAD (0 - 127.5)" << endl;
-        cout << "3 = Max Pixel Difference (0 - 255)" << endl;
-        cout << "4 = Entropi (0 - 8)" << endl;
-        cout << ">> ";
+        cout << "Variance (0 - 16256.25)" << endl;
+        cout << "MAD (0 - 127.5)" << endl;
+        cout << "Max Pixel Difference (0 - 255)" << endl;
+        cout << "Entropi (0 - 8)" << endl;
+        cout << "SSIM (0 - 1)" << endl;
+        printf("\x1B[32m>> \033[0m");
         if (!(cin >> threshold)) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -111,12 +120,21 @@ cout << " ___                                                        \n"
                 break;
             }
         }
+        else if (method == 5) {
+            if (threshold < 0 || threshold > 1) {
+                cout << "Range dari threshold tidak valid! Silahkan coba lagi!" << endl;
+                continue;
+            } else {
+                break;
+            }
+        }
     }
     int minSize;
     while (true){
+        cout << endl;
         cout << "Masukkan minimum size yang diinginkan!" << endl;
-        cout << "Catatan: anu" << endl;
-        cout << ">> ";
+        cout << "Catatan: size tidak boleh lebih besar dari ukuran foto asli!" << endl;
+        printf("\x1B[32m>> \033[0m");
         if (!(cin >> minSize)) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -130,41 +148,150 @@ cout << " ___                                                        \n"
             break;
         }
     }
+    double target;
+    while (true){
+        cout << endl;
+        cout << "Masukkan target persentase kompresi!" << endl;
+        cout << "Catatan: threshold akan disesuaikan jika mengisi ini, jika tetap ingin menggunakan threshold ketik 0." << endl;
+        printf("\x1B[32m>> \033[0m");
+        if (!(cin >> target)){
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Input harus berupa angka! Silahkan coba lagi!" << endl;
+            continue;
+        }
+        if (target == 0){
+            isTarget = false;
+        }
+        else{
+            isTarget = true;
+        }
+        break;
+    }
+    string outputFileName;
+    string outputGifName;
+    cout << endl;
+    cout << "Masukkan alamat relatif untuk menyimpan gambar! (Contoh: test/pohon_output.jpg)" << endl;
+    printf("\x1B[32m>> \033[0m");
+    cin >> outputFileName;
+    cout << endl;
+    cout << "Masukkan alamt relatif untuk menyimpan GIF! (Contoh: test/pohon_output.gif)" << endl;
+    printf("\x1B[32m>> \033[0m");
+    cin >> outputGifName;
+
+    size_t lastSlash = outputGifName.find_last_of("/\\");
+    if (lastSlash != string::npos) {
+        string directory = outputGifName.substr(0, lastSlash);
+        std::filesystem::create_directories(directory);
+    }
+    lastSlash = outputFileName.find_last_of("/\\");
+    if (lastSlash != string::npos) {
+        string directory = outputFileName.substr(0, lastSlash);
+        std::filesystem::create_directories(directory);
+    }
+
+    if (target == 0){
+        thersholdNow = threshold;
+    }
+    else{
+        if (method == 1){
+            thersholdMax = 16256.25;
+            thersholdMin = 0;
+        }
+        else if (method == 2){
+            thersholdMax = 127.5;
+            thersholdMin = 0;
+        }
+        else if (method == 3){
+            thersholdMax = 255;
+            thersholdMin = 0;
+        }
+        else if (method == 4){
+            thersholdMax = 8;
+            thersholdMin = 0;
+        }
+        else if (method == 5){
+            thersholdMax = 1;
+            thersholdMin = 0;
+        }
+        thersholdNow = (thersholdMax + thersholdMin) / 2;
+    }
 
 
     cout << "Memulai kompresi ..." << endl;
-
+    int totalnodes = 0;
+    int leafnodes = 0;
+    int depth = 0;
+    double ratio = 0;
+    long newSize = 0;
     auto startCompression = high_resolution_clock::now();
-    QuadTree quadtree(threshold, minSize, method);
-    quadtree.startDNC(pixels);
+    while (true){
+        QuadTree quadtree(thersholdNow, minSize, method);
+        quadtree.startDNC(pixels);
+        vector<vector<RGB>> reconstructedImage = quadtree.reconstructImage(width, height);
+        img.saveImage(reconstructedImage, outputFileName);
+        newSize = img.getFileSize(outputFileName);
+
+        if (isTarget){
+            ratio = (double) (1 - (double)newSize/orginalSize)* 100;
+            if (abs(ratio - target) < 0.03){
+                cout << "Berhasil mencapai target dengan selisih 0.03!" <<  endl;
+                totalnodes = quadtree.totalNodes();
+                leafnodes = quadtree.leafNodes();
+                depth = quadtree.depth();
+                cout << "Membuat GIF kompresi..." << endl;
+                quadtree.createCompressionGIF(outputGifName , width, height);
+                break;
+            }
+            else if (abs(thersholdMax - thersholdMin) < 0.01){
+                cout << "Threshold tidak dapat diturunkan lagi!!" << endl;
+                cout << "Berhasil mencapai target!" <<  endl;
+                totalnodes = quadtree.totalNodes();
+                leafnodes = quadtree.leafNodes();
+                depth = quadtree.depth();
+                quadtree.createCompressionGIF(outputGifName , width, height);
+                break;
+            }
+
+            if (ratio < target){
+                thersholdMin = thersholdNow;
+                thersholdNow = (thersholdMax + thersholdMin) / 2;
+            }
+            else if (ratio > target){
+                thersholdMax = thersholdNow;
+                thersholdNow = (thersholdMax + thersholdMin) / 2;
+            }
+            cout << "Persentase kompresi saat ini: " << ratio << "%" << endl;
+            remove(outputFileName.c_str());
+
+        }
+        else{
+            cout << "Berhasil mengkompresi gambar!" <<  endl;
+            ratio = (double) (1 - (double)newSize/orginalSize)* 100;
+            totalnodes = quadtree.totalNodes();
+            leafnodes = quadtree.leafNodes();
+            depth = quadtree.depth();
+            cout << "Membuat GIF kompresi..." << endl;
+            quadtree.createCompressionGIF(outputGifName, width, height);
+            break;
+        }
+    }
     auto endCompression = high_resolution_clock::now();
     auto compressionTime = duration_cast<milliseconds>(endCompression - startCompression).count();
 
 
     
-    cout << "Rekonstruksi gambar..." << endl;
-    
-    vector<vector<RGB>> reconstructedImage = quadtree.reconstructImage(width, height);
-    
-
-    filename = filename.substr(0, filename.find_last_of('.')) + "_output.jpg";
-    img.saveImage(reconstructedImage, filename);
-
-    long newSize = img.getFileSize(filename);\
-
     cout << "Original file size: " << orginalSize << " bytes" << endl;
     cout << "New file size: " << newSize << " bytes" << endl;
     cout << "Compression time: " << compressionTime << " ms" << endl;
-    cout << "Compression ratio: " << (double) (1 - (double)newSize/orginalSize)* 100 << "%" << endl;
-    cout << "Total nodes: " << quadtree.totalNodes() << endl;
-    cout << "Leaf nodes: " << quadtree.leafNodes() << endl;
-    cout << "Depth: " << quadtree.depth() << endl;
+    cout << "Compression ratio: " << ratio << "%" << endl;
+    cout << "Total nodes: " << totalnodes << endl;
+    cout << "Leaf nodes: " << leafnodes << endl;
+    cout << "Depth: " << depth << endl;
     
 
-    cout << "Membuat GIf kompresi..." << endl;
-    filename = filename.substr(0, filename.find_last_of('.')) + "_gif.gif";
-    quadtree.createCompressionGIF(filename , width, height);
     cout << "Gambar dan GIF telah berhasil disimpan!" << endl;
+    cout << "(Catatan: kadang file hasil kompresi tidak langsung muncul pada vscode, silahkan cek pada explorer)" << endl;
 
     return 0;
 }
