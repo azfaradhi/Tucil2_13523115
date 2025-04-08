@@ -100,6 +100,45 @@ double QuadTree::errorEntropy(int x, int y, int height, int width) {
     return (entropyR + entropyG + entropyB) / 3;
 }
 
+double QuadTree::errorSSIM(int x, int y, int height, int width) {
+
+    RGB avg = calculateAverage(x, y, height, width);
+    double uRx = avg.r;
+    double uGx = avg.g;
+    double uBx = avg.b;
+    double uRy = avg.r;
+    double uGy = avg.g;
+    double uBy = avg.b;
+
+
+    double sigmaRy = 0;
+    double sigmaGy = 0;
+    double sigmaBy = 0;
+    double c1 = 6.5025;
+    double c2 = 58.5225;
+
+    double sigmaRx = 0;
+    double sigmaGx = 0;
+    double sigmaBx = 0;
+
+    for (int i = y; i < y + height; i++){
+        for (int j = x; j < x+width; j++){
+            sigmaRx += (pixels[i][j].r - uRx) * (pixels[i][j].r - uRx);
+            sigmaGx += (pixels[i][j].g - uGx) * (pixels[i][j].g - uGx);
+            sigmaBx += (pixels[i][j].b - uBx) * (pixels[i][j].b - uBx);
+        }
+    }
+    sigmaRx /= (height * width);
+    sigmaGx /= (height * width);
+    sigmaBx /= (height * width);
+
+    double ssimr = ((2 * uRx * uRy + c1) * c2) / (((uRx * uRx) + (uRy * uRy) + c1) * (sigmaRx + c2));
+    double ssimg = ((2 * uGx * uGy + c1) * c2) / (((uGx * uGx) + (uGy * uGy) + c1) * (sigmaGx + c2));
+    double ssimb = ((2 * uBx * uBy + c1) * c2) / (((uBx * uBx) + (uBy * uBy) + c1) * (sigmaBx + c2));
+
+    return (ssimr + ssimg + ssimb) / 3; 
+}
+
 shared_ptr<QuadTreeNode> QuadTree::makeLeaf(int x, int y, int height, int width) {
     return make_shared<QuadTreeNode>(x, y, height, width, calculateAverage(x,y,height,width), true);
 }
@@ -124,7 +163,11 @@ shared_ptr<QuadTreeNode> QuadTree::buildQuadTree(int x, int y, int width, int he
         error = errorEntropy(x,y,height,width);
     }
     else if (errorMethod == 5){
-        //
+        error = errorSSIM(x,y,height,width);
+    }
+    else{
+        cout << "Error: Metode error tidak valid!" << endl;
+        return nullptr;
     }
 
     if (error <= threshold){
@@ -275,7 +318,7 @@ void QuadTree::createCompressionGIF(const std::string& outputPath, int width, in
     int imgHeight = height;
     
     GifWriter g;
-    GifBegin(&g, outputPath.c_str(), imgWidth, imgHeight, 100);
+    GifBegin(&g, outputPath.c_str(), imgWidth, imgHeight, 50);
     
     std::queue<std::shared_ptr<QuadTreeNode>> nodeQueue;
     std::vector<std::shared_ptr<QuadTreeNode>> allNodes;
@@ -293,7 +336,7 @@ void QuadTree::createCompressionGIF(const std::string& outputPath, int width, in
             originalFrame[idx + 2] = pixels[y][x].b;
         }
     }
-    GifWriteFrame(&g, originalFrame.data(), imgWidth, imgHeight, 100);
+    GifWriteFrame(&g, originalFrame.data(), imgWidth, imgHeight, 50);
     
     std::vector<std::vector<std::shared_ptr<QuadTreeNode>>> levelNodes;
     
@@ -321,8 +364,7 @@ void QuadTree::createCompressionGIF(const std::string& outputPath, int width, in
     }
     
     for (size_t level = 0; level < levelNodes.size(); level++) {
-        std::vector<std::vector<RGB>> reconstruction(imgHeight, std::vector<RGB>(imgWidth));
-        
+        std::vector<std::vector<RGB>> reconstruction = pixels;        
         for (size_t l = 0; l <= level; l++) {
             for (auto& node : levelNodes[l]) {
                 if (node->getIsLeaf()) {
@@ -346,7 +388,7 @@ void QuadTree::createCompressionGIF(const std::string& outputPath, int width, in
             }
         }
         
-        GifWriteFrame(&g, frame.data(), imgWidth, imgHeight, 100);
+        GifWriteFrame(&g, frame.data(), imgWidth, imgHeight, 50);
     }
     
     std::vector<std::vector<RGB>> finalReconstruction = reconstructImage(imgWidth, imgHeight);
@@ -361,7 +403,7 @@ void QuadTree::createCompressionGIF(const std::string& outputPath, int width, in
         }
     }
     
-    GifWriteFrame(&g, finalFrame.data(), imgWidth, imgHeight, 100);
+    GifWriteFrame(&g, finalFrame.data(), imgWidth, imgHeight, 50);
     
     GifEnd(&g);
 }
