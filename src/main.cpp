@@ -30,7 +30,7 @@ int main() {
     
 
     ImageExtract img;
-    cout << "Masukkan alamat relatif gambar! (contoh: test/tree.jpg)" << endl;
+    cout << "Masukkan alamat relatif gambar! (contoh: ../test/tree.jpg)" << endl;
     printf("\x1B[32m>> \033[0m");
     string filename;
     cin >> filename;
@@ -171,11 +171,11 @@ int main() {
     string outputFileName;
     string outputGifName;
     cout << endl;
-    cout << "Masukkan alamat relatif untuk menyimpan gambar! (Contoh: test/pohon_output.jpg)" << endl;
+    cout << "Masukkan alamat relatif untuk menyimpan gambar! (Contoh: ../test/pohon_output.jpg)" << endl;
     printf("\x1B[32m>> \033[0m");
     cin >> outputFileName;
     cout << endl;
-    cout << "Masukkan alamt relatif untuk menyimpan GIF! (Contoh: test/pohon_output.gif)" << endl;
+    cout << "Masukkan alamt relatif untuk menyimpan GIF! (Contoh: ../test/pohon_output.gif)" << endl;
     printf("\x1B[32m>> \033[0m");
     cin >> outputGifName;
 
