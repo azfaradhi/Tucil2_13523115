@@ -11,7 +11,6 @@
 - [Implemented Divide and Conquere Algorithms](#implemented-divide-and-conquer-algorithms)
 - [Program Structure](#program-structure)
 - [Requirements & Installation](#requirements--installation)
-- [Building and Compiling Bot](#how-to-compile--run)
 - [Author](#author)
 - [References](#references)
 
