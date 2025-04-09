@@ -141,7 +141,7 @@ int main() {
             cout << "Input harus berupa angka! Silahkan coba lagi!" << endl;
             continue;
         }
-        if (minSize > height * width) {
+        if (minSize > height * width || minSize <= 0) {
             cout << "Minimum size tidak valid! Silahkan coba lagi!" << endl;
             continue;
         } else {
