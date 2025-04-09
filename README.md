@@ -3,7 +3,7 @@
 <h3 align="center">Image Compression Using Quadtree</h3>
 
 <p align="center">
-  <img src="display.gif" alt="Main" width="400">
+  <img src="test/gif/spidermanVariance.gif" alt="Main" width="400">
 </p>
 
 ## Table of Contents
