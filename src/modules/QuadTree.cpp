@@ -1,5 +1,6 @@
 #include "../header/QuadTree.hpp"
 #include "../header/gif.cpp"
+#include <math.h>
 
 QuadTree::QuadTree(double threshold, int minSize, int errorMethod){
     this->root = nullptr;
@@ -196,6 +197,7 @@ shared_ptr<QuadTreeNode> QuadTree::buildQuadTree(int x, int y, int width, int he
     
     shared_ptr<QuadTreeNode> node = make_shared<QuadTreeNode>(x, y, height, width, calculateAverage(x,y,height,width), false);
     node->setChildren(tl, tr, bl, br);
+    node->setAverageColor(calculateAverage(x,y,height,width));
     return node;
 }
 
@@ -278,99 +280,99 @@ int QuadTree::depth() const {
     return countDepth(root);
 }
 
-
-void QuadTree::createCompressionGIF(const std::string& outputPath, int width, int height) {
-
+void QuadTree::createCompressionGIF(const string& outputPath, int width, int height) {
     int imgWidth = width;
     int imgHeight = height;
     
     GifWriter g;
-    GifBegin(&g, outputPath.c_str(), imgWidth, imgHeight, 50);
+    GifBegin(&g, outputPath.c_str(), imgWidth, imgHeight, 75);
     
-    std::queue<std::shared_ptr<QuadTreeNode>> nodeQueue;
-    std::vector<std::shared_ptr<QuadTreeNode>> allNodes;
+    vector<vector<shared_ptr<QuadTreeNode>>> levelNodes;
+    queue<shared_ptr<QuadTreeNode>> q;
+    queue<int> levels;
     
     if (root) {
-        nodeQueue.push(root);
+        q.push(root);
+        levels.push(0);
     }
     
-    std::vector<uint8_t> originalFrame(imgWidth * imgHeight * 4);
+    int maxl = 0;
+    while (!q.empty()) {
+        auto node = q.front();
+        int level = levels.front();
+        q.pop();
+        levels.pop();
+        
+        while (levelNodes.size() <= level) {
+            levelNodes.push_back(vector<shared_ptr<QuadTreeNode>>());
+        }
+        
+        levelNodes[level].push_back(node);
+        maxl = std::max(maxl, level);
+        
+        if (!node->getIsLeaf()) {
+            if (node->getTopLeft()) {
+                q.push(node->getTopLeft());
+                levels.push(level + 1);
+            }
+            if (node->getTopRight()) {
+                q.push(node->getTopRight());
+                levels.push(level + 1);
+            }
+            if (node->getBottomLeft()) {
+                q.push(node->getBottomLeft());
+                levels.push(level + 1);
+            }
+            if (node->getBottomRight()) {
+                q.push(node->getBottomRight());
+                levels.push(level + 1);
+            }
+        }
+    }
+    
+    vector<uint8_t> firstFrame(imgWidth * imgHeight * 4);
+    RGB rootColor = root->getAverageColor();
     for (int y = 0; y < imgHeight; y++) {
         for (int x = 0; x < imgWidth; x++) {
             int idx = (y * imgWidth + x) * 4;
-            originalFrame[idx] = pixels[y][x].r;
-            originalFrame[idx + 1] = pixels[y][x].g;
-            originalFrame[idx + 2] = pixels[y][x].b;
+            firstFrame[idx] = rootColor.r;
+            firstFrame[idx + 1] = rootColor.g;
+            firstFrame[idx + 2] = rootColor.b;
+            firstFrame[idx + 3] = 255;
         }
     }
-    GifWriteFrame(&g, originalFrame.data(), imgWidth, imgHeight, 50);
+    GifWriteFrame(&g, firstFrame.data(), imgWidth, imgHeight, 75);
     
-    std::vector<std::vector<std::shared_ptr<QuadTreeNode>>> levelNodes;
+    vector<vector<RGB>> curentFrame(imgHeight, vector<RGB>(imgWidth, rootColor));
     
-    while (!nodeQueue.empty()) {
-        int levelSize = nodeQueue.size();
-        std::vector<std::shared_ptr<QuadTreeNode>> currentLevel;
-        
-        for (int i = 0; i < levelSize; i++) {
-            auto node = nodeQueue.front();
-            nodeQueue.pop();
-            currentLevel.push_back(node);
-            allNodes.push_back(node);
+    for (int level = 1; level <= maxl; level++) {
+        for (auto& node : levelNodes[level]) {
+            int nodeX = node->getX();
+            int nodeY = node->getY();
+            int nodeWidth = node->getWidth();
+            int nodeHeight = node->getHeight();
+            RGB nodeColor = node->getAverageColor();
             
-            if (!node->getIsLeaf()) {
-                if (node->getTopLeft()) nodeQueue.push(node->getTopLeft());
-                if (node->getTopRight()) nodeQueue.push(node->getTopRight());
-                if (node->getBottomLeft()) nodeQueue.push(node->getBottomLeft());
-                if (node->getBottomRight()) nodeQueue.push(node->getBottomRight());
-            }
-        }
-        
-        if (!currentLevel.empty()) {
-            levelNodes.push_back(currentLevel);
-        }
-    }
-    
-    for (size_t level = 0; level < levelNodes.size(); level++) {
-        std::vector<std::vector<RGB>> reconstruction = pixels;        
-        for (size_t l = 0; l <= level; l++) {
-            for (auto& node : levelNodes[l]) {
-                if (node->getIsLeaf()) {
-                    for (int y = node->getY(); y < std::min(node->getY() + node->getHeight(), imgHeight); y++) {
-                        for (int x = node->getX(); x < std::min(node->getX() + node->getWidth(), imgWidth); x++) {
-                            reconstruction[y][x] = node->getAverageColor();
-                        }
-                    }
+            for (int y = nodeY; y < min(nodeY + nodeHeight, imgHeight); y++) {
+                for (int x = nodeX; x < min(nodeX + nodeWidth, imgWidth); x++) {
+                    curentFrame[y][x] = nodeColor;
                 }
             }
         }
-
-        std::vector<uint8_t> frame(imgWidth * imgHeight * 4);
+        
+        vector<uint8_t> frame(imgWidth * imgHeight * 4);
         for (int y = 0; y < imgHeight; y++) {
             for (int x = 0; x < imgWidth; x++) {
                 int idx = (y * imgWidth + x) * 4;
-                frame[idx] = reconstruction[y][x].r;
-                frame[idx + 1] = reconstruction[y][x].g;
-                frame[idx + 2] = reconstruction[y][x].b;
+                frame[idx] = curentFrame[y][x].r;
+                frame[idx + 1] = curentFrame[y][x].g;
+                frame[idx + 2] = curentFrame[y][x].b;
                 frame[idx + 3] = 255;
             }
         }
         
-        GifWriteFrame(&g, frame.data(), imgWidth, imgHeight, 50);
+        GifWriteFrame(&g, frame.data(), imgWidth, imgHeight, 75);
     }
-    
-    std::vector<std::vector<RGB>> finalReconstruction = reconstructImage(imgWidth, imgHeight);
-    std::vector<uint8_t> finalFrame(imgWidth * imgHeight * 4);
-    for (int y = 0; y < imgHeight; y++) {
-        for (int x = 0; x < imgWidth; x++) {
-            int idx = (y * imgWidth + x) * 4;
-            finalFrame[idx] = finalReconstruction[y][x].r;
-            finalFrame[idx + 1] = finalReconstruction[y][x].g;
-            finalFrame[idx + 2] = finalReconstruction[y][x].b;
-            finalFrame[idx + 3] = 255;
-        }
-    }
-    
-    GifWriteFrame(&g, finalFrame.data(), imgWidth, imgHeight, 50);
     
     GifEnd(&g);
 }
