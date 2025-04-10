@@ -63,6 +63,7 @@ public:
     int getWidth() const { return width; }
     RGB getAverageColor() const { return averageColor; }
     bool getIsLeaf() const { return isLeaf; }
+    void setAverageColor(RGB color) { averageColor = color; }
     
     // Mengambil node dari anak
     shared_ptr<QuadTreeNode> getTopLeft() const { return topLeft; }
