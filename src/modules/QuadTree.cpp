@@ -308,7 +308,7 @@ void QuadTree::createCompressionGIF(const string& outputPath, int width, int hei
         }
         
         levelNodes[level].push_back(node);
-        maxl = std::max(maxl, level);
+        maxl = max(maxl, level);
         
         if (!node->getIsLeaf()) {
             if (node->getTopLeft()) {
